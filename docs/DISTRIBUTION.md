@@ -84,6 +84,20 @@ gente de confianza. Aun así, un tester puede extraer las claves: restríngelas 
 ya es público, `MEDIAPIPE_MODEL_TOKEN` ya no hace falta para descargar `models-v1` (se quitó de
 Doppler y de los secretos que exige la acción; el código lo trata como opcional).
 
+## Runner choice (CI and release builds)
+
+`ci.yml` and `release-apk.yml` start with a `pick-runner` job that decides where the Android build runs.
+When the repository variable `PC_RUNNER_HEARTBEAT` (epoch seconds, UTC, written every minute by a watcher on
+the owner's PC only while it is free and idle) is under 180 seconds old, the build job runs on the
+self-hosted runner (`["self-hosted","pc"]`, see Sebas1705/ci-runner); otherwise it runs on
+`ubuntu-latest`. The fallback is automatic, so a switched-off or busy PC never blocks a build.
+
+Only `push` (including tag pushes) and `workflow_dispatch` can pick the PC. `pull_request` and every other
+event always use GitHub-hosted runners, because the repository is public and the PC must never run
+untrusted fork code. The release job still uploads only to Firebase App Distribution; nothing about
+publishing changes. The PC image has JDK 21 and the Android command-line tools but no Docker and not
+necessarily Node, so the release workflow sets Node up with `actions/setup-node`.
+
 ## Llevarlo al template
 
 Los dos archivos son independientes del contenido de la app (solo asumen un módulo `:app`
